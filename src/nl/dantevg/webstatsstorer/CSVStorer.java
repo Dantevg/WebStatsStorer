@@ -30,11 +30,20 @@ public class CSVStorer {
 			List<String> columns = getColumns();
 			StatData.Stats stats = Stats.getStats();
 			writer = new FileWriter(file);
-			if (columns.size() == 0) setColumns(stats.scores.keySet());
+			if (columns.isEmpty()) {
+				columns = stats.columns;
+				setColumns(stats.columns);
+			}
 			
-			for (String column : stats.scores.keySet()) {
-				Map<String, Object> scores = stats.scores.get(column);
-				// TODO: write scores
+			// Write a line of scores for every player
+			for (String entry : stats.entries) {
+				List<String> scoreList = new ArrayList<>();
+				scoreList.add(entry);
+				columns.forEach(column -> scoreList.add(
+						column.equalsIgnoreCase("Player")
+								? entry
+								: (String) stats.scores.get(column).get(entry)));
+				writer.write(String.join(",", scoreList) + "\n");
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -52,13 +61,15 @@ public class CSVStorer {
 		return columns;
 	}
 	
-	private void setColumns(Set<String> columns) throws IOException {
-		writer.write(String.join(",", columns));
+	private void setColumns(List<String> columns) throws IOException {
+		columns.add(0, "Player");
+		writer.write(String.join(",", columns) + "\n");
 	}
 	
 	private boolean ensureFileExists() {
 		try {
-			file.createNewFile(); // Create new file if it did not yet exist
+			// Create new file if it did not yet exist
+			file.createNewFile();
 		} catch (IOException e) {
 			e.printStackTrace();
 			return false;
