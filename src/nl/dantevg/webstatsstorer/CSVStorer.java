@@ -31,9 +31,9 @@ public class CSVStorer {
 			// Create new file if it was deleted after plugin enable
 			if (!ensureFileExists()) return false;
 			
+			writer = new FileWriter(file, true);
 			StatData.Stats stats = Stats.getStats();
 			List<String> columns = getColumns(stats);
-			writer = new FileWriter(file);
 			
 			// Write a line of scores for every player
 			for (String entry : stats.entries) {
@@ -58,6 +58,7 @@ public class CSVStorer {
 			}
 			
 			writer.close();
+			writer = null;
 			return true;
 		} catch (IOException e) {
 			plugin.getLogger().log(Level.WARNING, "Could not write scores to file " + file.getPath(), e);
@@ -67,12 +68,16 @@ public class CSVStorer {
 	
 	private List<String> readColumns() throws IOException {
 		List<String> columns = new ArrayList<>();
-		Scanner scanner = new Scanner(file);
-		scanner.useDelimiter(",");
 		
-		while (scanner.hasNext()) columns.add(scanner.next());
+		Scanner lineScanner = new Scanner(file);
+		String line = lineScanner.nextLine();
+		lineScanner.close();
 		
-		scanner.close();
+		Scanner columnScanner = new Scanner(line);
+		columnScanner.useDelimiter(",");
+		while (columnScanner.hasNext()) columns.add(columnScanner.next());
+		columnScanner.close();
+		
 		return columns;
 	}
 	
