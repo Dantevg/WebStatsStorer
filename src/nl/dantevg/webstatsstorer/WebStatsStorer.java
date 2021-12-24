@@ -17,9 +17,9 @@ public class WebStatsStorer extends JavaPlugin implements CommandExecutor {
 	
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-		if (command.getName().equalsIgnoreCase("storestats")) {
-			getLogger().info("Storing statistics");
-			storer.store();
+		getLogger().info("Storing statistics");
+		if (!storer.store()) {
+			sender.sendMessage("Could not store stats, check console");
 		}
 		return true;
 	}

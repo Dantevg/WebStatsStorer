@@ -6,7 +6,10 @@ import nl.dantevg.webstats.Stats;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.*;
+import java.util.logging.Level;
 
 public class CSVStorer {
 	private final WebStatsStorer plugin;
@@ -17,40 +20,52 @@ public class CSVStorer {
 	public CSVStorer(WebStatsStorer plugin, String filename) {
 		this.plugin = plugin;
 		this.filename = filename;
-		this.file = new File(plugin.getDataFolder(), filename);
+		file = new File(plugin.getDataFolder(), filename);
+		plugin.getDataFolder().mkdirs(); // Create plugin folder if not existing
 		
 		ensureFileExists();
 	}
 	
-	public void store() {
+	public boolean store() {
 		try {
 			// Create new file if it was deleted after plugin enable
-			if (!ensureFileExists()) return;
+			if (!ensureFileExists()) return false;
 			
-			List<String> columns = getColumns();
 			StatData.Stats stats = Stats.getStats();
+			List<String> columns = getColumns(stats);
 			writer = new FileWriter(file);
-			if (columns.isEmpty()) {
-				columns = stats.columns;
-				setColumns(stats.columns);
-			}
 			
 			// Write a line of scores for every player
 			for (String entry : stats.entries) {
 				List<String> scoreList = new ArrayList<>();
-				scoreList.add(entry);
-				columns.forEach(column -> scoreList.add(
-						column.equalsIgnoreCase("Player")
-								? entry
-								: (String) stats.scores.get(column).get(entry)));
-				writer.write(String.join(",", scoreList) + "\n");
+				columns.forEach(column -> {
+					if (column.equalsIgnoreCase("player")) {
+						// Player's name
+						scoreList.add(entry);
+					} else if (column.equalsIgnoreCase("timestamp")) {
+						// Number of seconds since unix epoch, in UTC+0 timezone
+						scoreList.add(Instant.now().getEpochSecond() + "");
+					} else if (column.equalsIgnoreCase("date")) {
+						// Date in YYYY-MM-DD format, local timezone
+						scoreList.add(LocalDate.now().toString());
+					} else {
+						if (stats.scores.containsKey(column)) {
+							scoreList.add((String) stats.scores.get(column).get(entry));
+						}
+					}
+				});
+				writer.append(String.join(",", scoreList)).append("\n");
 			}
+			
+			writer.close();
+			return true;
 		} catch (IOException e) {
-			e.printStackTrace();
+			plugin.getLogger().log(Level.WARNING, "Could not write scores to file " + file.getPath(), e);
 		}
+		return false;
 	}
 	
-	private List<String> getColumns() throws IOException {
+	private List<String> readColumns() throws IOException {
 		List<String> columns = new ArrayList<>();
 		Scanner scanner = new Scanner(file);
 		scanner.useDelimiter(",");
@@ -61,9 +76,26 @@ public class CSVStorer {
 		return columns;
 	}
 	
-	private void setColumns(List<String> columns) throws IOException {
-		columns.add(0, "Player");
-		writer.write(String.join(",", columns) + "\n");
+	private List<String> getColumns(StatData.Stats stats) throws IOException {
+		// Try to read columns from file
+		List<String> columns = readColumns();
+		if (!columns.isEmpty()) return columns;
+		
+		// No columns present in file (file is empty), get columns and write
+		columns = (stats.columns != null)
+				? stats.columns
+				: new ArrayList<>(stats.scores.keySet());
+		
+		// Add initial columns and write to empty file
+		if (!columns.contains("Player")) columns.add(0, "Player");
+		if (!columns.contains("Date")) columns.add(0, "Date");
+		writeColumns(columns);
+		
+		return columns;
+	}
+	
+	private void writeColumns(List<String> columns) throws IOException {
+		writer.append(String.join(",", columns)).append("\n");
 	}
 	
 	private boolean ensureFileExists() {
