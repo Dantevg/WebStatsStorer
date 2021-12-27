@@ -2,6 +2,8 @@ package nl.dantevg.webstatsstorer;
 
 import nl.dantevg.webstats.StatData;
 import nl.dantevg.webstats.Stats;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -12,12 +14,12 @@ import java.util.*;
 import java.util.logging.Level;
 
 public class CSVStorer {
-	private final WebStatsStorer plugin;
-	private final String filename;
-	private final File file;
-	private FileWriter writer;
+	private final @NotNull WebStatsStorer plugin;
+	private final @NotNull String filename;
+	private final @NotNull File file;
+	private @Nullable FileWriter writer;
 	
-	public CSVStorer(WebStatsStorer plugin, String filename) {
+	public CSVStorer(@NotNull WebStatsStorer plugin, @NotNull String filename) {
 		this.plugin = plugin;
 		this.filename = filename;
 		file = new File(plugin.getDataFolder(), filename);
@@ -66,7 +68,7 @@ public class CSVStorer {
 		return false;
 	}
 	
-	private List<String> readColumns() throws IOException {
+	private @NotNull List<String> readColumns() throws IOException {
 		List<String> columns = new ArrayList<>();
 		
 		Scanner lineScanner = new Scanner(file);
@@ -81,7 +83,7 @@ public class CSVStorer {
 		return columns;
 	}
 	
-	private List<String> getColumns(StatData.Stats stats) throws IOException {
+	private @NotNull List<String> getColumns(StatData.@NotNull Stats stats) throws IOException {
 		// Try to read columns from file
 		List<String> columns = readColumns();
 		if (!columns.isEmpty()) return columns;
@@ -99,7 +101,7 @@ public class CSVStorer {
 		return columns;
 	}
 	
-	private void writeColumns(List<String> columns) throws IOException {
+	private void writeColumns(@NotNull List<String> columns) throws IOException {
 		writer.append(String.join(",", columns)).append("\n");
 	}
 	
