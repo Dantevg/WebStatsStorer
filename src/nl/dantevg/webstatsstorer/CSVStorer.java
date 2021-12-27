@@ -40,7 +40,8 @@ public class CSVStorer {
 			// Write a line of scores for every player
 			for (String entry : stats.entries) {
 				List<String> scoreList = new ArrayList<>();
-				columns.forEach(column -> {
+				boolean hasScores = false;
+				for (String column : columns) {
 					if (column.equalsIgnoreCase("player")) {
 						// Player's name
 						scoreList.add(entry);
@@ -50,13 +51,13 @@ public class CSVStorer {
 					} else if (column.equalsIgnoreCase("date")) {
 						// Date in YYYY-MM-DD format, local timezone
 						scoreList.add(LocalDate.now().toString());
-					} else {
-						if (stats.scores.containsKey(column)) {
-							scoreList.add((String) stats.scores.get(column).get(entry));
-						}
+					} else if (stats.scores.containsKey(column) && stats.scores.get(column).containsKey(entry)) {
+						scoreList.add(stats.scores.get(column).get(entry).toString());
+						hasScores = true;
 					}
-				});
-				writer.append(String.join(",", scoreList)).append("\n");
+				}
+				
+				if (hasScores) writer.append(String.join(",", scoreList)).append("\n");
 			}
 			
 			writer.close();
@@ -71,9 +72,12 @@ public class CSVStorer {
 	private @NotNull List<String> readColumns() throws IOException {
 		List<String> columns = new ArrayList<>();
 		
-		Scanner lineScanner = new Scanner(file);
-		String line = lineScanner.nextLine();
-		lineScanner.close();
+		String line;
+		try (Scanner lineScanner = new Scanner(file)) {
+			line = lineScanner.nextLine();
+		} catch (NoSuchElementException e) {
+			return columns;
+		}
 		
 		Scanner columnScanner = new Scanner(line);
 		columnScanner.useDelimiter(",");
