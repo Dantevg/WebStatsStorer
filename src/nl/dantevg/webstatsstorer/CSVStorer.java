@@ -10,7 +10,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Scanner;
 import java.util.logging.Level;
 
 public class CSVStorer {
@@ -54,6 +57,9 @@ public class CSVStorer {
 					} else if (stats.scores.containsKey(column) && stats.scores.get(column).containsKey(entry)) {
 						scoreList.add(stats.scores.get(column).get(entry).toString());
 						hasScores = true;
+					} else {
+						// Add empty score so the columns stay aligned
+						scoreList.add("");
 					}
 				}
 				
