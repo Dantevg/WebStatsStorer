@@ -112,6 +112,7 @@ public class CSVStorer {
 	}
 	
 	private void writeColumns(@NotNull List<String> columns) throws IOException {
+		assert writer != null;
 		writer.append(String.join(",", columns)).append("\n");
 	}
 	
