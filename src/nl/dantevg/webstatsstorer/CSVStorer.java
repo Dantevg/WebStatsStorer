@@ -54,8 +54,8 @@ public class CSVStorer {
 					} else if (column.equalsIgnoreCase("date")) {
 						// Date in YYYY-MM-DD format, local timezone
 						scoreList.add(LocalDate.now().toString());
-					} else if (stats.scores.containsKey(column) && stats.scores.get(column).containsKey(entry)) {
-						scoreList.add(stats.scores.get(column).get(entry).toString());
+					} else if (stats.scores.contains(column, entry)) {
+						scoreList.add(stats.scores.get(column, entry));
 						hasScores = true;
 					} else {
 						// Add empty score so the columns stay aligned
@@ -101,7 +101,7 @@ public class CSVStorer {
 		// No columns present in file (file is empty), get columns and write
 		columns = (stats.columns != null)
 				? stats.columns
-				: new ArrayList<>(stats.scores.keySet());
+				: new ArrayList<>(stats.scores.rowKeySet());
 		
 		// Add initial columns and write to empty file
 		if (!columns.contains("Player")) columns.add(0, "Player");
